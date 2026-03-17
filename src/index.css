@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-mccaa-teal: #2da0a4;
+  --color-mccaa-burgundy: #7a4a5f;
+  --color-mccaa-orange: #d68f49;
+  --color-mccaa-yellow: #e5ca6d;
+  --color-mccaa-green: #b8e38d;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-gray-50 text-gray-900;
+  }
+  
+  button, a, [role="button"], [role="link"] {
+    @apply cursor-pointer;
+  }
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+.markdown-content strong {
+  @apply font-bold;
+}
+
+.markdown-content p {
+  @apply mb-2 last:mb-0;
+}
+
+.markdown-content ul {
+  @apply list-disc ml-4 mb-2;
+}
+
+.markdown-content ol {
+  @apply list-decimal ml-4 mb-2;
+}
+
+.markdown-content li {
+  @apply mb-1;
+}
