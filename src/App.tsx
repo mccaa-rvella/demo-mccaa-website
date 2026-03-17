@@ -156,7 +156,7 @@ const Navbar = ({ onPageChange, currentPage }: { onPageChange: (p: Page) => void
   );
 };
 
-const Hero = ({ onOpenAI, onOpenReport }: { onOpenAI: () => void, onOpenReport: () => void }) => {
+const Hero = ({ onOpenAI, onOpenReport, onPageChange }: { onOpenAI: () => void, onOpenReport: () => void, onPageChange: (p: Page) => void }) => {
   const [hoveredPane, setHoveredPane] = useState<'left' | 'right' | null>(null);
 
   return (
@@ -204,7 +204,10 @@ const Hero = ({ onOpenAI, onOpenReport }: { onOpenAI: () => void, onOpenReport: 
               <User size={14} className="w-[clamp(12px,1.5vw,18px)]" />
               Submit a Formal Report
             </button>
-            <button className="bg-transparent border-2 border-white/40 hover:border-white text-white font-bold px-[clamp(0.75rem,2vw,2rem)] py-[clamp(0.5rem,1vw,1rem)] rounded-lg transition-all whitespace-nowrap text-[clamp(10px,1.2vw,16px)]">
+            <button 
+              onClick={() => onPageChange('consumer-rights')}
+              className="bg-transparent border-2 border-white/40 hover:border-white text-white font-bold px-[clamp(0.75rem,2vw,2rem)] py-[clamp(0.5rem,1vw,1rem)] rounded-lg transition-all whitespace-nowrap text-[clamp(10px,1.2vw,16px)]"
+            >
               Consumer Rights
             </button>
           </div>
@@ -269,7 +272,7 @@ const Hero = ({ onOpenAI, onOpenReport }: { onOpenAI: () => void, onOpenReport: 
           <div className="bg-mccaa-yellow/20 p-[clamp(4px,1vw,10px)] rounded-full group-hover:bg-mccaa-yellow/40 transition-colors">
             <Sparkles className="text-mccaa-yellow animate-pulse w-[clamp(16px,2vw,24px)] h-[clamp(16px,2vw,24px)]" />
           </div>
-          <span>Ask Invictus, our AI Assistant</span>
+          <span>Ask l-Uffiċjal, our AI Assistant</span>
         </motion.button>
       </div>
     </main>
@@ -550,7 +553,7 @@ const Footer = () => (
         </div>
       </div>
 
-      {/* Right side left empty to avoid overlap with Ask Invictus button */}
+      {/* Right side left empty to avoid overlap with Ask l-Uffiċjal button */}
       <div className="hidden md:block"></div>
     </div>
   </footer>
@@ -558,7 +561,7 @@ const Footer = () => (
 
 const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hello! I'm Invictus, your MCCAA digital assistant. How can I help you with consumer rights or business regulations today?" }
+    { role: 'ai', text: "Hello! I'm l-Uffiċjal, your MCCAA digital assistant. How can I help you with consumer rights or business regulations today?" }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -586,7 +589,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
       const chat = ai.chats.create({
         model: model,
         config: {
-          systemInstruction: `You are Invictus, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
+          systemInstruction: `You are l-Uffiċjal, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
           Your goal is to provide helpful, accurate, and professional information regarding:
           1. Consumer Rights in Malta (warranties, returns, cooling-off periods, etc.)
           2. Business Compliance (standards, certifications, market surveillance)
@@ -610,7 +613,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
         model: model,
         history: history,
         config: {
-          systemInstruction: `You are Invictus, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
+          systemInstruction: `You are l-Uffiċjal, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
           Your goal is to provide helpful, accurate, and professional information regarding:
           1. Consumer Rights in Malta (warranties, returns, cooling-off periods, etc.)
           2. Business Compliance (standards, certifications, market surveillance)
@@ -656,7 +659,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
                   <div className="w-full h-full bg-mccaa-teal rounded-full flex items-center justify-center text-white font-bold text-xs">M</div>
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-lg">Invictus Assistant</h3>
+                  <h3 className="text-white font-bold text-lg">l-Uffiċjal Assistant</h3>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full animate-pulse ${isLoading ? 'bg-mccaa-orange' : 'bg-mccaa-green'}`}></span>
                     <span className="text-white/60 text-xs font-medium">{isLoading ? 'Thinking...' : 'Online now'}</span>
@@ -688,7 +691,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
                     </div>
                   </div>
                   <span className="text-[10px] text-white/40 mt-2 mx-1">
-                    {msg.role === 'ai' ? 'Invictus' : 'You'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.role === 'ai' ? 'l-Uffiċjal' : 'You'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               ))}
@@ -726,7 +729,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
                   disabled={isLoading}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder={isLoading ? "Invictus is thinking..." : "Ask about regulations..."}
+                  placeholder={isLoading ? "l-Uffiċjal is thinking..." : "Ask about regulations..."}
                   className="w-full bg-white/10 border border-white/20 focus:border-mccaa-teal focus:ring-0 rounded-2xl py-4 pl-5 pr-14 text-white placeholder-white/40 backdrop-blur-md outline-none transition-all disabled:opacity-50"
                 />
                 <button 
@@ -1560,7 +1563,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <Hero onOpenAI={() => setIsChatOpen(true)} onOpenReport={() => setIsReportOpen(true)} />
+            <Hero onOpenAI={() => setIsChatOpen(true)} onOpenReport={() => setIsReportOpen(true)} onPageChange={handlePageChange} />
             <BrandingStrip />
             <Portals />
             <News onArticleClick={setSelectedArticle} />
@@ -1626,7 +1629,7 @@ export default function App() {
               className="bg-mccaa-teal text-white p-4 rounded-full shadow-2xl flex items-center gap-2 border border-white/20 group"
             >
               <Sparkles className="text-mccaa-yellow group-hover:rotate-12 transition-transform" size={24} />
-              <span className="font-bold pr-2 hidden sm:inline">Ask Invictus</span>
+              <span className="font-bold pr-2 hidden sm:inline">Ask l-Uffiċjal</span>
             </motion.button>
           </motion.div>
         )}
