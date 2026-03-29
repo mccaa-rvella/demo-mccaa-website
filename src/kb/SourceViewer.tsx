@@ -75,12 +75,12 @@ export default function SourceViewer() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center pt-24"><div className="animate-pulse text-[#2da0a4]">Loading article...</div></div>;
+    return <div className="min-h-screen flex items-center justify-center pt-0"><div className="animate-pulse text-[#2da0a4]">Loading article...</div></div>;
   }
 
   if (error || !article) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center pt-24 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center pt-0 gap-4">
         <p className="text-gray-500">Article not found</p>
         <Link to="/kb" className="text-[#2da0a4] hover:underline">← Back to Knowledge Base</Link>
       </div>
@@ -88,7 +88,7 @@ export default function SourceViewer() {
   }
 
   return (
-    <div className="pt-24 max-w-6xl mx-auto px-4">
+    <div className="pt-0 max-w-6xl mx-auto px-4">
       <div className="mb-6">
         <Link to="/kb" className="text-sm text-[#2da0a4] hover:underline flex items-center gap-1 mb-3">
           <ArrowLeft size={14} /> Back to Knowledge Base

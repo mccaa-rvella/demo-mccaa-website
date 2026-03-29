@@ -54,7 +54,7 @@ export default function KBLanding() {
   const remainingSectors = allSectors?.filter(s => !topSlugs.has(s.slug)) ?? [];
 
   return (
-    <div className="pt-24">
+    <div className="pt-0">
       <section className="bg-gradient-to-br from-[#2da0a4] to-[#258487] py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">MCCAA Knowledge Base</h1>
