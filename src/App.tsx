@@ -122,14 +122,17 @@ const Navbar = ({ onPageChange, currentPage }: { onPageChange: (p: Page) => void
         </button>
 
         <div className="hidden md:flex items-center space-x-8">
+          <a href="/kb" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
+              Knowledge Base
+            </a>
           {[
             { name: 'About', id: 'about' as Page },
             { name: 'News', id: 'news' as Page },
             { name: 'Calls', id: 'calls' as Page }
           ].map((item) => (
-            <button 
-              key={item.id} 
-              onClick={() => onPageChange(item.id)} 
+            <button
+              key={item.id}
+              onClick={() => onPageChange(item.id)}
               className={`text-sm font-semibold transition-colors ${
                 currentPage === item.id ? 'text-mccaa-teal' : 'text-gray-700 hover:text-mccaa-teal'
               }`}
