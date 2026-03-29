@@ -154,6 +154,9 @@ app.include_router(articles_router)
 from api.modules.cms.router import router as cms_router
 app.include_router(cms_router)
 
+from api.modules.public.router import router as public_router
+app.include_router(public_router)
+
 class ChatMessage(BaseModel):
     role: str
     text: str
