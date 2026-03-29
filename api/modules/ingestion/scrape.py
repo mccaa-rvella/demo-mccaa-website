@@ -12,14 +12,10 @@ def run_scrape(url: str) -> dict:
     batch_id = str(uuid.uuid4())
 
     app = FirecrawlApp(api_key=settings.firecrawl_api_key)
-    result = app.scrape_url(url)
+    result = app.scrape(url)
 
-    if isinstance(result, dict):
-        raw_content = result.get("markdown") or result.get("content") or json.dumps(result)
-        metadata = result.get("metadata", {})
-    else:
-        raw_content = str(result)
-        metadata = {}
+    raw_content = result.markdown or json.dumps(result.model_dump())
+    metadata = result.metadata.model_dump() if hasattr(result.metadata, 'model_dump') else {}
 
     source_id = None
     with get_cursor() as cur:

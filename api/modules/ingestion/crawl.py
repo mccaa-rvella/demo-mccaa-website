@@ -12,19 +12,20 @@ def run_crawl(url: str) -> dict:
     batch_id = str(uuid.uuid4())
 
     app = FirecrawlApp(api_key=settings.firecrawl_api_key)
-    result = app.crawl_url(url)
+    result = app.crawl(url)
 
-    pages = result.get("data", []) if isinstance(result, dict) else []
+    pages = result.data if hasattr(result, 'data') and result.data else []
 
     pages_stored = 0
     for page in pages:
-        raw_content = page.get("markdown") or page.get("content") or json.dumps(page)
-        source_url = page.get("metadata", {}).get("sourceURL") or url
+        raw_content = page.markdown or json.dumps(page.model_dump())
+        meta = page.metadata.model_dump() if hasattr(page.metadata, 'model_dump') else {}
+        source_url = meta.get("sourceURL") or meta.get("url") or url
         with get_cursor() as cur:
             cur.execute(
                 """INSERT INTO raw_sources (source_type, source_url, raw_content, raw_metadata, batch_id, status)
                    VALUES (%s, %s, %s, %s, %s, 'pending')""",
-                ("crawl", source_url, raw_content, json.dumps(page.get("metadata", {})), batch_id),
+                ("crawl", source_url, raw_content, json.dumps(meta), batch_id),
             )
         pages_stored += 1
 

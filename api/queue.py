@@ -3,7 +3,7 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from api.db import get_cursor
 
@@ -40,13 +40,20 @@ def claim_next_task() -> Optional[dict]:
         return None
 
 
+class _DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return super().default(obj)
+
+
 def complete_task(task_id: int, result: dict):
     with get_cursor() as cur:
         cur.execute(
             """UPDATE task_queue
                SET status = 'completed', result = %s, completed_at = NOW()
                WHERE id = %s""",
-            (json.dumps(result), task_id),
+            (json.dumps(result, cls=_DateTimeEncoder), task_id),
         )
 
 
@@ -77,7 +84,7 @@ def register_handlers():
         "crawl": lambda payload: run_crawl(payload["url"]),
         "scrape": lambda payload: run_scrape(payload["url"]),
         "consolidate": lambda payload: run_consolidation(payload["batch_id"]),
-        "classify": lambda payload: run_classification(payload["unit_id"]),
+        "classify": lambda payload: run_classification(payload.get("unit_id") or payload["knowledge_unit_id"]),
         "json_normalize": lambda payload: run_json_normalize(payload["records"]),
         "generate_article": lambda payload: generate_article(
             sector=payload["sector"], scope=payload["scope"], audience=payload["audience"],
