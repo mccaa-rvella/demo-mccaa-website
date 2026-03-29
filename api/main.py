@@ -142,6 +142,9 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 from api.modules.skills.router import router as skills_router
 app.include_router(skills_router)
 
+from api.modules.ingestion.router import router as ingestion_router
+app.include_router(ingestion_router)
+
 class ChatMessage(BaseModel):
     role: str
     text: str
