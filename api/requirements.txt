@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+psycopg2-binary
+openai
+python-dotenv
+pydantic
+pydantic-settings
+anthropic
+firecrawl-py
+httpx
+pytest
+pytest-asyncio
