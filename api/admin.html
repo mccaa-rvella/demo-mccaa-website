@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MCCAA Knowledge Base Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:       #00a4a6;
+      --teal-dark:  #007f81;
+      --burgundy:   #8b1538;
+      --orange:     #e8641a;
+      --yellow:     #f5a623;
+      --green:      #2ecc71;
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --border:     rgba(255,255,255,0.08);
+      --text:       #e6edf3;
+      --muted:      #8b949e;
+      --danger:     #f85149;
+      --radius:     12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Brand Strip ── */
+    .brand-strip { height: 4px; display: flex; }
+    .brand-strip div { flex: 1; }
+    .s1 { background: var(--teal); }
+    .s2 { background: var(--burgundy); }
+    .s3 { background: var(--orange); }
+    .s4 { background: var(--yellow); }
+    .s5 { background: var(--green); }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; flex-direction: column; gap: 2rem;
+    }
+    #login-screen .logo { display: flex; align-items: center; gap: 12px; }
+    #login-screen .logo-badge {
+      width: 48px; height: 48px; background: var(--teal);
+      border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; font-weight: 800; font-size: 20px;
+    }
+    #login-screen h1 { font-size: 1.4rem; font-weight: 700; }
+    #login-screen p { color: var(--muted); font-size: 0.9rem; }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 380px;
+      display: flex; flex-direction: column; gap: 1.2rem;
+    }
+    .login-card label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .login-card input {
+      width: 100%; padding: 0.85rem 1rem; border-radius: 8px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      font-family: inherit; font-size: 1rem; margin-top: 6px;
+      transition: border-color .2s;
+    }
+    .login-card input:focus { outline: none; border-color: var(--teal); }
+    #login-error { color: var(--danger); font-size: 0.85rem; display: none; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 0.7rem 1.4rem; border-radius: 8px; font-family: inherit;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none;
+      transition: all .2s; text-decoration: none;
+    }
+    .btn-primary { background: var(--teal); color: #fff; width: 100%; justify-content: center; }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.05); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(248,81,73,0.3); }
+    .btn-danger:hover { background: rgba(248,81,73,0.1); }
+    .btn-success { background: var(--green); color: #fff; width: 100%; justify-content: center; }
+    .btn-success:hover { filter: brightness(1.1); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Main App ── */
+    #app { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
+
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 60px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo-sm { width: 32px; height: 32px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+    header h1 { font-size: 1rem; font-weight: 700; }
+    header span { font-size: 0.75rem; color: var(--muted); background: rgba(255,255,255,0.05); padding: 3px 10px; border-radius: 99px; border: 1px solid var(--border); }
+    .logout-btn { font-size: 0.8rem; color: var(--muted); background: transparent; border: none; cursor: pointer; }
+    .logout-btn:hover { color: var(--text); }
+
+    .app-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    aside {
+      width: 260px; flex-shrink: 0; background: var(--surface);
+      border-right: 1px solid var(--border); padding: 1.5rem 1rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      overflow: hidden;
+    }
+    .sidebar-label { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; padding: 0.5rem 0.75rem; }
+    .sidebar-search {
+      display: flex; align-items: center; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.9rem; gap: 8px; margin-bottom: 0.5rem;
+    }
+    .sidebar-search input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 0.875rem; width: 100%; }
+    .sidebar-search input:focus { outline: none; }
+    .sidebar-search svg { color: var(--muted); flex-shrink: 0; }
+
+    #doc-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+    .doc-item {
+      padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;
+      transition: background .15s; border: 1px solid transparent;
+    }
+    .doc-item:hover { background: rgba(255,255,255,0.04); }
+    .doc-item.active { background: rgba(0,164,166,0.12); border-color: rgba(0,164,166,0.3); }
+    .doc-item-title { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-item-meta { font-size: 0.7rem; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .type-badge {
+      font-size: 0.65rem; padding: 1px 7px; border-radius: 99px; font-weight: 600;
+    }
+    .type-manual { background: rgba(0,164,166,0.2); color: var(--teal); }
+    .type-webpage { background: rgba(46,204,113,0.15); color: var(--green); }
+    .type-pdf { background: rgba(232,100,26,0.15); color: var(--orange); }
+
+    .new-doc-btn { margin-bottom: 0.5rem; }
+
+    /* ── Main Content ── */
+    main { flex: 1; padding: 2rem; overflow-y: auto; }
+
+    .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1rem; text-align: center; color: var(--muted); }
+    .welcome svg { opacity: .3; }
+    .welcome h2 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    .welcome p { font-size: 0.875rem; }
+
+    /* ── Form Panel ── */
+    #doc-panel { display: none; max-width: 780px; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    .panel-header h2 { font-size: 1.2rem; font-weight: 700; }
+    .panel-actions { display: flex; gap: 0.75rem; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.75rem 1rem; font-family: inherit; font-size: 0.9rem;
+      transition: border-color .2s; resize: vertical;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--teal); }
+    .form-group select option { background: var(--surface); }
+    .form-group textarea { min-height: 260px; line-height: 1.6; }
+
+    .save-row { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+    .save-row .spacer { flex: 1; }
+    #save-status { font-size: 0.85rem; color: var(--green); display: none; }
+    #save-error { font-size: 0.85rem; color: var(--danger); display: none; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── New badge ── */
+    .new-badge { display: inline-block; background: var(--green); color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; margin-left: 8px; }
+
+    /* ── Stats bar ── */
+    .stats-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.5rem; flex: 1; }
+    .stat-card .stat-val { font-size: 1.8rem; font-weight: 700; }
+    .stat-card .stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Utility Buttons ── */
+    .utils-section { margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem; }
+    .btn-util { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.6rem 1rem; font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .15s; }
+    .btn-util:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .btn-util:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-util.running { color: var(--teal); border-color: rgba(0,164,166,0.4); }
+    .util-label { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; padding: 0.5rem 0; }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1.25rem; font-size: 0.85rem; max-width: 340px; z-index: 100; display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    #toast.ok { border-color: rgba(46,204,113,0.4); color: var(--green); }
+    #toast.err { border-color: rgba(248,81,73,0.4); color: var(--danger); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- Brand Strip -->
+<div class="brand-strip"><div class="s1"></div><div class="s2"></div><div class="s3"></div><div class="s4"></div><div class="s5"></div></div>
+
+<!-- ─── Login Screen ─── -->
+<div id="login-screen">
+  <div class="logo">
+    <div class="logo-badge">M</div>
+    <div>
+      <h1>MCCAA Admin</h1>
+      <p>Knowledge Base Manager</p>
+    </div>
+  </div>
+  <div class="login-card">
+    <div class="form-group">
+      <label>Admin Password</label>
+      <input type="password" id="pwd-input" placeholder="Enter admin password" />
+    </div>
+    <p id="login-error">Incorrect password. Please try again.</p>
+    <button class="btn btn-primary" onclick="doLogin()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+      Unlock Admin Panel
+    </button>
+  </div>
+</div>
+
+<!-- ─── Main App ─── -->
+<div id="app">
+  <header>
+    <div class="header-left">
+      <div class="logo-sm">M</div>
+      <h1>Knowledge Base</h1>
+      <span id="doc-count-badge">Loading...</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </header>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside>
+      <button class="btn btn-primary new-doc-btn" onclick="openNew()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Document
+      </button>
+      <div class="sidebar-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Filter documents..." oninput="filterDocs()" />
+      </div>
+      <span class="sidebar-label">Documents</span>
+      <div id="doc-list"><p style="color:var(--muted);font-size:.8rem;padding:.5rem">Loading...</p></div>
+
+      <!-- Utility Actions -->
+      <div class="utils-section">
+        <span class="util-label">Utilities</span>
+        <button class="btn-util" id="embed-btn" onclick="embedMissing()" title="Generate vector embeddings for any documents added without them (e.g. via seed script). Required for chatbot search.">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Embed Missing Docs
+        </button>
+        <button class="btn-util" id="regen-btn" onclick="regenSyntheses()" title="Pre-generate all wizard synthesis articles. Run after adding cross-cutting or universal documents, or after a bulk import.">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Regenerate Syntheses
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Welcome -->
+      <div id="welcome-panel">
+        <div class="welcome">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <h2>Select a document to edit</h2>
+          <p>Or click <strong>New Document</strong> to add knowledge to the AI.</p>
+        </div>
+      </div>
+
+      <!-- Edit / Create Form -->
+      <div id="doc-panel">
+        <div class="panel-header">
+          <h2 id="panel-title">New Document <span class="new-badge">NEW</span></h2>
+          <div class="panel-actions">
+            <button class="btn btn-danger" id="delete-btn" onclick="deleteDoc()" style="display:none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m5 0V4a1 1 0 011-1h2a1 1 0 011 1v2"/></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="f-title" placeholder="e.g. Toy Safety Regulations" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="f-type">
+              <option value="manual">Manual Entry</option>
+              <option value="webpage">Webpage</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Source URL</label>
+            <input type="text" id="f-url" placeholder="https://mccaa.org.mt/..." />
+          </div>
+          <div class="form-group full">
+            <label>Content * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"> — This is what the AI reads. Be specific and detailed.</span></label>
+            <textarea id="f-content" placeholder="Enter the regulatory content, directives, or information here..."></textarea>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <span id="save-status">✓ Saved &amp; embedded successfully</span>
+          <span id="save-error"></span>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>
+          <button class="btn btn-success" id="save-btn" onclick="saveDoc()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Save &amp; Embed in AI
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+  const API = '';  // same origin
+  let adminKey = '';
+  let allDocs = [];
+  let currentDocId = null;
+  let isNew = false;
+
+  // ── Auth ────────────────────────────────────────────
+  function doLogin() {
+    const pwd = document.getElementById('pwd-input').value;
+    adminKey = pwd;
+    document.getElementById('login-error').style.display = 'none';
+    loadDocs().then(() => {
+      sessionStorage.setItem('mccaa_admin_key', pwd);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    }).catch(() => {
+      document.getElementById('login-error').style.display = 'block';
+      adminKey = '';
+    });
+  }
+
+  document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+  function doLogout() {
+    sessionStorage.removeItem('mccaa_admin_key');
+    adminKey = '';
+    location.reload();
+  }
+
+  // ── Load docs ────────────────────────────────────────
+  async function loadDocs() {
+    const res = await fetch(`${API}/admin/documents`, { headers: { 'X-Admin-Key': adminKey } });
+    if (!res.ok) throw new Error('Unauthorized');
+    allDocs = await res.json();
+    renderSidebar(allDocs);
+    document.getElementById('doc-count-badge').textContent = `${allDocs.length} documents`;
+  }
+
+  function renderSidebar(docs) {
+    const list = document.getElementById('doc-list');
+    if (docs.length === 0) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:.8rem;padding:.5rem .75rem">No documents yet.</p>';
+      return;
+    }
+    list.innerHTML = docs.map(d => `
+      <div class="doc-item ${d.id === currentDocId ? 'active' : ''}" onclick="openDoc(${d.id})">
+        <div class="doc-item-title">${d.title}</div>
+        <div class="doc-item-meta">
+          <span class="type-badge type-${d.type}">${d.type}</span>
+          #${d.id}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterDocs() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    renderSidebar(allDocs.filter(d => d.title.toLowerCase().includes(q) || (d.url || '').toLowerCase().includes(q)));
+  }
+
+  // ── Open / New ────────────────────────────────────────
+  async function openDoc(id) {
+    currentDocId = id;
+    isNew = false;
+    const res = await fetch(`${API}/admin/documents/${id}`, { headers: { 'X-Admin-Key': adminKey } });
+    const doc = await res.json();
+    document.getElementById('f-title').value   = doc.title   || '';
+    document.getElementById('f-url').value     = doc.url     || '';
+    document.getElementById('f-content').value = doc.content || '';
+    document.getElementById('f-type').value    = doc.type    || 'manual';
+    document.getElementById('panel-title').innerHTML = doc.title;
+    document.getElementById('delete-btn').style.display = 'inline-flex';
+    showPanel();
+    renderSidebar(allDocs);
+  }
+
+  function openNew() {
+    currentDocId = null;
+    isNew = true;
+    document.getElementById('f-title').value   = '';
+    document.getElementById('f-url').value     = '';
+    document.getElementById('f-content').value = '';
+    document.getElementById('f-type').value    = 'manual';
+    document.getElementById('panel-title').innerHTML = 'New Document <span class="new-badge">NEW</span>';
+    document.getElementById('delete-btn').style.display = 'none';
+    showPanel();
+    resetStatus();
+  }
+
+  function showPanel() {
+    document.getElementById('welcome-panel').style.display = 'none';
+    document.getElementById('doc-panel').style.display = 'block';
+    resetStatus();
+  }
+
+  function cancelEdit() {
+    currentDocId = null;
+    document.getElementById('doc-panel').style.display = 'none';
+    document.getElementById('welcome-panel').style.display = 'block';
+    renderSidebar(allDocs);
+  }
+
+  // ── Save ─────────────────────────────────────────────
+  async function saveDoc() {
+    const title   = document.getElementById('f-title').value.trim();
+    const url     = document.getElementById('f-url').value.trim() || `manual://${Date.now()}`;
+    const content = document.getElementById('f-content').value.trim();
+    const type    = document.getElementById('f-type').value;
+
+    if (!title || !content) { showError('Title and Content are required.'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Embedding...';
+    resetStatus();
+
+    try {
+      let res;
+      if (isNew) {
+        res = await fetch(`${API}/admin/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+          body: JSON.stringify({ title, url, content, type })
+        });
+      } else {
+        res = await fetch(`${API}/admin/documents/${currentDocId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+          body: JSON.stringify({ title, url, content, type })
+        });
+      }
+
+      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Save failed'); }
+      const result = await res.json();
+      if (isNew) { currentDocId = result.id; isNew = false; }
+
+      document.getElementById('save-status').style.display = 'block';
+      document.getElementById('panel-title').innerHTML = title;
+      document.getElementById('delete-btn').style.display = 'inline-flex';
+      await loadDocs();
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save &amp; Embed in AI';
+    }
+  }
+
+  // ── Delete ────────────────────────────────────────────
+  async function deleteDoc() {
+    if (!confirm('Permanently delete this document from the AI knowledge base?')) return;
+    await fetch(`${API}/admin/documents/${currentDocId}`, {
+      method: 'DELETE', headers: { 'X-Admin-Key': adminKey }
+    });
+    cancelEdit();
+    await loadDocs();
+  }
+
+  // ── UI Helpers ────────────────────────────────────────
+  function resetStatus() {
+    document.getElementById('save-status').style.display = 'none';
+    document.getElementById('save-error').style.display = 'none';
+  }
+  function showError(msg) {
+    const el = document.getElementById('save-error');
+    el.textContent = '⚠ ' + msg;
+    el.style.display = 'block';
+  }
+
+  // ── Toast ─────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = type;
+    el.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  // ── Utility: Embed Missing Docs ───────────────────────
+  async function embedMissing() {
+    const btn = document.getElementById('embed-btn');
+    btn.disabled = true;
+    btn.classList.add('running');
+    btn.innerHTML = '<div class="spinner" style="border-top-color:var(--teal)"></div> Embedding...';
+    try {
+      const res = await fetch(`${API}/admin/embed-missing`, {
+        method: 'POST', headers: { 'X-Admin-Key': adminKey }
+      });
+      if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+      const data = await res.json();
+      showToast(`✓ ${data.message}`, 'ok');
+    } catch (e) {
+      showToast(`⚠ Embed failed: ${e.message}`, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('running');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Embed Missing Docs';
+    }
+  }
+
+  // ── Utility: Regenerate Syntheses ─────────────────────
+  async function regenSyntheses() {
+    if (!confirm('This will clear and regenerate all pre-built synthesis articles. This runs in the background and may take a few minutes. Continue?')) return;
+    const btn = document.getElementById('regen-btn');
+    btn.disabled = true;
+    btn.classList.add('running');
+    btn.innerHTML = '<div class="spinner" style="border-top-color:var(--teal)"></div> Starting...';
+    try {
+      const res = await fetch(`${API}/admin/regenerate-syntheses`, {
+        method: 'POST', headers: { 'X-Admin-Key': adminKey }
+      });
+      if (!res.ok) throw new Error((await res.json()).detail || 'Failed');
+      const data = await res.json();
+      showToast(`✓ ${data.message} (cleared ${data.cleared} cached articles)`, 'ok');
+    } catch (e) {
+      showToast(`⚠ Regeneration failed: ${e.message}`, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('running');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Regenerate Syntheses';
+    }
+  }
+
+  // ── Auto-login from session ───────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = sessionStorage.getItem('mccaa_admin_key');
+    if (saved) {
+      adminKey = saved;
+      loadDocs().then(() => {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+      }).catch(() => {
+        sessionStorage.removeItem('mccaa_admin_key');
+        adminKey = '';
+      });
+    }
+  });
+</script>
+</body>
+</html>

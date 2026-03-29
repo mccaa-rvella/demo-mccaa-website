@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { useChat } from 'ai/react';
 import Markdown from 'react-markdown';
+import WizardClient from './components/Wizard/Wizard';
 import { 
   Search, 
   MessageSquare, 
@@ -33,7 +34,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 // --- Types ---
-type Page = 'home' | 'about' | 'login' | 'consumer-rights' | 'calls' | 'news';
+type Page = 'home' | 'about' | 'login' | 'consumer-rights' | 'calls' | 'news' | 'wizard';
 
 // --- Constants & Data ---
 
@@ -254,7 +255,7 @@ const Hero = ({ onOpenAI, onOpenReport, onPageChange }: { onOpenAI: () => void, 
               <Briefcase size={14} className="w-[clamp(12px,1.5vw,18px)]" />
               Business Services
             </button>
-            <button className="bg-transparent border-2 border-white/40 hover:border-white text-white font-bold px-[clamp(0.75rem,2vw,2rem)] py-[clamp(0.5rem,1vw,1rem)] rounded-lg transition-all whitespace-nowrap text-[clamp(10px,1.2vw,16px)]">
+            <button onClick={() => onPageChange('wizard')} className="bg-transparent border-2 border-white/40 hover:border-white text-white font-bold px-[clamp(0.75rem,2vw,2rem)] py-[clamp(0.5rem,1vw,1rem)] rounded-lg transition-all whitespace-nowrap text-[clamp(10px,1.2vw,16px)]">
               Technical Standards
             </button>
           </div>
@@ -560,12 +561,14 @@ const Footer = () => (
 );
 
 const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hello! I'm l-Uffiċjal, your MCCAA digital assistant. How can I help you with consumer rights or business regulations today?" }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
+    api: 'http://localhost:8000/chat',
+    initialMessages: [
+      { id: 'welcome', role: 'assistant', content: "Hello! I'm l-Uffiċjal, your MCCAA digital assistant. How can I help you with consumer rights or business regulations today?" }
+    ],
+  });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -573,68 +576,8 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
     }
   }, [messages]);
 
-  const handleSend = async (textOverride?: string) => {
-    const textToSend = textOverride || input;
-    if (!textToSend.trim() || isLoading) return;
-
-    const newMessages = [...messages, { role: 'user', text: textToSend }];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const model = "gemini-3.1-pro-preview";
-      
-      const chat = ai.chats.create({
-        model: model,
-        config: {
-          systemInstruction: `You are l-Uffiċjal, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
-          Your goal is to provide helpful, accurate, and professional information regarding:
-          1. Consumer Rights in Malta (warranties, returns, cooling-off periods, etc.)
-          2. Business Compliance (standards, certifications, market surveillance)
-          3. Technical Regulations and Standards
-          4. The process for filing formal complaints with the MCCAA.
-          
-          Maintain a professional yet approachable tone. If you are unsure about a specific legal detail, advise the user to contact the MCCAA directly at info@mccaa.org.mt or +356 2395 2000.
-          Keep responses concise and well-structured. Use bullet points for lists.`,
-        },
-      });
-
-      const history = messages.map(msg => ({
-        role: msg.role === 'ai' ? 'model' : 'user',
-        parts: [{ text: msg.text }]
-      }));
-
-      // Note: sendMessage only accepts message parameter, but we want to provide history.
-      // Actually, ai.chats.create takes a history parameter.
-      
-      const chatWithHistory = ai.chats.create({
-        model: model,
-        history: history,
-        config: {
-          systemInstruction: `You are l-Uffiċjal, the official digital assistant for the Malta Competition and Consumer Affairs Authority (MCCAA). 
-          Your goal is to provide helpful, accurate, and professional information regarding:
-          1. Consumer Rights in Malta (warranties, returns, cooling-off periods, etc.)
-          2. Business Compliance (standards, certifications, market surveillance)
-          3. Technical Regulations and Standards
-          4. The process for filing formal complaints with the MCCAA.
-          
-          Maintain a professional yet approachable tone. If you are unsure about a specific legal detail, advise the user to contact the MCCAA directly at info@mccaa.org.mt or +356 2395 2000.
-          Keep responses concise and well-structured. Use bullet points for lists.`,
-        }
-      });
-
-      const result = await chatWithHistory.sendMessage({ message: textToSend });
-      const responseText = result.text;
-
-      setMessages(prev => [...prev, { role: 'ai', text: responseText || "I'm sorry, I couldn't process that request." }]);
-    } catch (error) {
-      console.error("Gemini Error:", error);
-      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting to my brain right now. Please try again in a moment or contact us directly." }]);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleChipClick = (text: string) => {
+    append({ role: 'user', content: text });
   };
 
   return (
@@ -679,19 +622,19 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide"
             >
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] ${msg.role === 'user' ? 'ml-auto' : ''}`}>
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] ${msg.role === 'user' ? 'ml-auto' : ''}`}>
                   <div className={`px-5 py-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                     msg.role === 'user' 
                       ? 'bg-mccaa-teal text-white rounded-tr-none' 
                       : 'bg-white/20 backdrop-blur-md border border-white/20 text-white rounded-tl-none'
                   }`}>
                     <div className="markdown-content">
-                      <Markdown>{msg.text}</Markdown>
+                      <Markdown>{msg.content}</Markdown>
                     </div>
                   </div>
                   <span className="text-[10px] text-white/40 mt-2 mx-1">
-                    {msg.role === 'ai' ? 'l-Uffiċjal' : 'You'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.role === 'assistant' ? 'l-Uffiċjal' : 'You'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               ))}
@@ -712,7 +655,7 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
                 <button 
                   key={chip}
                   disabled={isLoading}
-                  onClick={() => handleSend(chip)}
+                  onClick={() => handleChipClick(chip)}
                   className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/80 text-xs font-semibold hover:bg-white/10 transition-all disabled:opacity-50"
                 >
                   {chip}
@@ -722,24 +665,25 @@ const AIChat = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) =
 
             {/* Input */}
             <div className="p-6">
-              <div className="relative flex items-center">
-                <input 
-                  type="text"
-                  value={input}
-                  disabled={isLoading}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder={isLoading ? "l-Uffiċjal is thinking..." : "Ask about regulations..."}
-                  className="w-full bg-white/10 border border-white/20 focus:border-mccaa-teal focus:ring-0 rounded-2xl py-4 pl-5 pr-14 text-white placeholder-white/40 backdrop-blur-md outline-none transition-all disabled:opacity-50"
-                />
-                <button 
-                  onClick={() => handleSend()}
-                  disabled={isLoading || !input.trim()}
-                  className="absolute right-2 w-10 h-10 flex items-center justify-center rounded-xl bg-mccaa-teal text-white shadow-lg hover:bg-mccaa-teal/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send size={18} />
-                </button>
-              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="relative flex items-center">
+                  <input 
+                    type="text"
+                    value={input}
+                    disabled={isLoading}
+                    onChange={handleInputChange}
+                    placeholder={isLoading ? "l-Uffiċjal is thinking..." : "Ask about regulations..."}
+                    className="w-full bg-white/10 border border-white/20 focus:border-mccaa-teal focus:ring-0 rounded-2xl py-4 pl-5 pr-14 text-white placeholder-white/40 backdrop-blur-md outline-none transition-all disabled:opacity-50"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isLoading || !input.trim()}
+                    className="absolute right-2 w-10 h-10 flex items-center justify-center rounded-xl bg-mccaa-teal text-white shadow-lg hover:bg-mccaa-teal/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+              </form>
               <div className="mt-4 flex justify-center gap-4 opacity-50">
                 <div className="h-1 w-8 rounded-full bg-mccaa-teal"></div>
                 <div className="h-1 w-8 rounded-full bg-mccaa-burgundy"></div>
@@ -1607,6 +1551,12 @@ export default function App() {
         {currentPage === 'calls' && (
           <motion.div key="calls" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <CallsPage />
+          </motion.div>
+        )}
+
+        {currentPage === 'wizard' && (
+          <motion.div key="wizard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <WizardClient />
           </motion.div>
         )}
       </AnimatePresence>

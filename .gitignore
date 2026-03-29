@@ -8,3 +8,4 @@ coverage/
 !.env.example
 .worktrees/
 .superpowers/
+__pycache__/
