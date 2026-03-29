@@ -4,6 +4,11 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 
+def get_client():
+    from api.main import app
+    return TestClient(app)
+
+
 ADMIN_HEADERS = {"X-Admin-Key": "mccaa-admin-2026"}
 
 
@@ -87,3 +92,42 @@ def test_ingest_requires_auth(client):
         json={"url": "https://example.com"},
     )
     assert resp.status_code == 401
+
+
+def test_json_import_valid_schema(db_cursor):
+    client = get_client()
+    valid_data = [
+        {
+            "title": "Toy Safety Requirements",
+            "content": "All toys must comply with EN 71...",
+            "classification": {
+                "types": ["technical"],
+                "sectors": ["toys"],
+                "actors": ["manufacturer"],
+                "scope": "sector-specific",
+            },
+        }
+    ]
+    resp = client.post(
+        "/admin/ingest/json",
+        json={"data": valid_data},
+        headers=ADMIN_HEADERS,
+    )
+    assert resp.status_code == 202
+    assert resp.json()["valid_count"] == 1
+
+
+def test_json_import_invalid_schema_triggers_normalisation():
+    client = get_client()
+    invalid_data = [
+        {"name": "Some regulation", "text": "This is about consumer rights..."}
+    ]
+    with patch("api.modules.ingestion.json_schema.enqueue_task", return_value=10):
+        resp = client.post(
+            "/admin/ingest/json",
+            json={"data": invalid_data},
+            headers=ADMIN_HEADERS,
+        )
+        assert resp.status_code == 202
+        assert resp.json()["invalid_count"] == 1
+        assert resp.json()["normalisation_task_id"] is not None
