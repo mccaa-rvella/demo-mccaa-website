@@ -125,11 +125,6 @@ export default function SourceViewer() {
               }`}>{summary.scope}</div>
               <div className="font-semibold text-sm text-gray-900 mb-1">{summary.topic}</div>
               <p className="text-sm text-gray-700">{summary.summary}</p>
-              {summary.article_slug && (
-                <Link to={`/kb/${summary.article_slug}`} className="text-sm text-[#2da0a4] hover:underline mt-2 inline-block">
-                  Read full details →
-                </Link>
-              )}
             </div>
           ))}
         </main>

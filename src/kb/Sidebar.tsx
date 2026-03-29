@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import TagPill from '../components/ui/TagPill';
 
 interface SidebarProps {
@@ -36,12 +35,11 @@ export default function Sidebar({ topics, actors, crossCuttingSummaries, activeT
           <div>
             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Related Topics</div>
             <div className="space-y-2">
-              {crossCuttingSummaries.map(s => (
-                <Link key={s.article_slug} to={`/kb/${s.article_slug}`}
-                  className="block bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors">
+              {crossCuttingSummaries.map((s, i) => (
+                <div key={i} className="bg-gray-50 rounded-lg p-3">
                   <div className="font-semibold text-sm text-gray-900">{s.topic}</div>
-                  <div className="text-xs text-gray-500">{s.scope}</div>
-                </Link>
+                  <div className="text-xs text-gray-500 capitalize">{s.scope}</div>
+                </div>
               ))}
             </div>
           </div>
