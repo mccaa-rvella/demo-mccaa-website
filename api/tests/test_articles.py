@@ -176,3 +176,5 @@ def test_generate_business_article(mock_anthropic, mock_skills):
         assert article is not None
         assert article["status"] == "draft"
         assert article["audience"] == "business"
+        assert unit_id in article["source_knowledge_unit_ids"]
+        assert article["skills_used"] == []
