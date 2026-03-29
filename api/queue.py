@@ -10,12 +10,22 @@ from api.db import get_cursor
 logger = logging.getLogger(__name__)
 
 
-def enqueue_task(task_type: str, payload: dict) -> int:
+def enqueue_task(task_type: str, payload: dict, deduplicate: bool = True) -> int:
+    payload_json = json.dumps(payload, sort_keys=True)
     with get_cursor() as cur:
+        if deduplicate:
+            cur.execute(
+                """SELECT id FROM task_queue
+                   WHERE task_type = %s AND payload = %s AND status IN ('queued', 'running')
+                   LIMIT 1""",
+                (task_type, payload_json),
+            )
+            if cur.fetchone():
+                return -1  # Already queued
         cur.execute(
             """INSERT INTO task_queue (task_type, payload, status)
                VALUES (%s, %s, 'queued') RETURNING id""",
-            (task_type, json.dumps(payload)),
+            (task_type, payload_json),
         )
         return cur.fetchone()["id"]
 
@@ -77,7 +87,7 @@ def register_handlers():
     from api.modules.ingestion.scrape import run_scrape
     from api.modules.ingestion.consolidation import run_consolidation
     from api.modules.classification.classifier import run_classification
-    from api.modules.articles.generator import generate_article
+    from api.modules.articles.generator import generate_article, update_existing_article
     from api.modules.ingestion.json_schema import run_json_normalize
 
     TASK_HANDLERS.update({
@@ -89,8 +99,9 @@ def register_handlers():
         "generate_article": lambda payload: generate_article(
             sector=payload["sector"], scope=payload["scope"], audience=payload["audience"],
         ),
-        "update_article": lambda payload: generate_article(
-            sector=payload["sector"], scope=payload["scope"], audience=payload["audience"],
+        "update_article": lambda payload: update_existing_article(
+            article_id=payload["article_id"], sector=payload["sector"],
+            scope=payload["scope"], audience=payload["audience"],
         ),
     })
 

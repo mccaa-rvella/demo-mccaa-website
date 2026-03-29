@@ -171,14 +171,109 @@ def generate_article(sector: str, scope: str, audience: str, admin_edits: list =
     skill_names = [s["name"] for s in skills]
 
     with get_cursor() as cur:
+        # Check if a draft already exists for this sector/audience — update it instead of creating a duplicate
         cur.execute(
-            """INSERT INTO articles (title, slug, sector, scope, audience, html_content,
-                   tag_map, status, skills_used, source_knowledge_unit_ids, cross_cutting_summaries)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, 'draft', %s, %s, %s)
-               RETURNING *""",
-            (article_data["title"], slug, sector, scope, audience,
-             article_data["html_content"], json.dumps(article_data["tag_map"]),
-             skill_names, unit_ids, json.dumps(article_data.get("cross_cutting_summaries", []))),
+            """SELECT id FROM articles WHERE sector = %s AND audience = %s AND status = 'draft' LIMIT 1""",
+            (sector, audience),
+        )
+        existing = cur.fetchone()
+
+        if existing:
+            cur.execute(
+                """UPDATE articles SET title = %s, slug = %s, html_content = %s,
+                       tag_map = %s, skills_used = %s, source_knowledge_unit_ids = %s,
+                       cross_cutting_summaries = %s, updated_at = NOW()
+                   WHERE id = %s RETURNING *""",
+                (article_data["title"], slug, article_data["html_content"],
+                 json.dumps(article_data["tag_map"]), skill_names, unit_ids,
+                 json.dumps(article_data.get("cross_cutting_summaries", [])), existing["id"]),
+            )
+        else:
+            cur.execute(
+                """INSERT INTO articles (title, slug, sector, scope, audience, html_content,
+                       tag_map, status, skills_used, source_knowledge_unit_ids, cross_cutting_summaries)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, 'draft', %s, %s, %s)
+                   RETURNING *""",
+                (article_data["title"], slug, sector, scope, audience,
+                 article_data["html_content"], json.dumps(article_data["tag_map"]),
+                 skill_names, unit_ids, json.dumps(article_data.get("cross_cutting_summaries", []))),
+            )
+        article = dict(cur.fetchone())
+
+    article["tag_map"] = article_data["tag_map"]
+    article["cross_cutting_summaries"] = article_data.get("cross_cutting_summaries", [])
+    return article
+
+
+def update_existing_article(article_id: int, sector: str, scope: str, audience: str) -> dict:
+    """Regenerate content for an existing article, preserving its identity."""
+    # Load existing article to get admin_edits
+    with get_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM articles WHERE id = %s", (article_id,))
+        existing = cur.fetchone()
+    if not existing:
+        raise ValueError(f"Article {article_id} not found")
+
+    admin_edits = existing["admin_edits"] if existing["admin_edits"] else None
+    units = _gather_knowledge_units(sector, scope, audience)
+    skills = select_skills_for_article(sector, scope, audience)
+
+    units_text = "\n\n".join(
+        f"[Unit {u['id']}] {u['title']}\nScope: {u['classification'].get('scope', 'unknown')}\n{u['content'][:3000]}"
+        for u in units
+    )
+
+    skills_section = ""
+    if skills:
+        skills_text = "\n\n".join(
+            f"### Skill: {s['name']}\n{s['skill_content']}"
+            for s in skills
+        )
+        skills_section = f"Apply these writing skills:\n{skills_text}"
+
+    admin_edits_section = ""
+    if admin_edits:
+        edits_text = "\n".join(
+            f"- Section '{e['section_id']}': preserve this admin edit: {e['edited_html'][:500]}"
+            for e in admin_edits
+        )
+        admin_edits_section = f"IMPORTANT — Preserve these admin edits:\n{edits_text}"
+
+    prompt_template = CONSUMER_ARTICLE_PROMPT if audience == "consumer" else BUSINESS_ARTICLE_PROMPT
+    prompt = prompt_template.format(
+        sector=sector,
+        knowledge_units=units_text,
+        skills_section=skills_section,
+        admin_edits_section=admin_edits_section,
+    )
+
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    response = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=8192,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    text = response.content[0].text.strip()
+    try:
+        start = text.index("{")
+        end = text.rindex("}") + 1
+        article_data = json.loads(text[start:end])
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Failed to parse article update response: {text[:200]}") from exc
+
+    unit_ids = [u["id"] for u in units]
+    skill_names = [s["name"] for s in skills]
+
+    with get_cursor() as cur:
+        cur.execute(
+            """UPDATE articles SET title = %s, html_content = %s, tag_map = %s,
+                   skills_used = %s, source_knowledge_unit_ids = %s,
+                   cross_cutting_summaries = %s, updated_at = NOW()
+               WHERE id = %s RETURNING *""",
+            (article_data["title"], article_data["html_content"],
+             json.dumps(article_data["tag_map"]), skill_names, unit_ids,
+             json.dumps(article_data.get("cross_cutting_summaries", [])), article_id),
         )
         article = dict(cur.fetchone())
 
