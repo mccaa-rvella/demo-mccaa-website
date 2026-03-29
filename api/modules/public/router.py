@@ -39,6 +39,20 @@ def get_all_sectors():
         return [dict(r) for r in cur.fetchall()]
 
 
+@router.get("/articles/by-sector/{sector_slug}")
+def get_articles_by_sector(sector_slug: str, audience: str = "business"):
+    """Return a published article for a given sector and audience."""
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT * FROM articles WHERE sector = %s AND audience = %s AND status IN ('published', 'update_pending') ORDER BY updated_at DESC LIMIT 1",
+            (sector_slug, audience),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Article not found")
+        return dict(row)
+
+
 @router.get("/articles/{slug}")
 def get_article_by_slug(slug: str):
     """Return a published article by slug."""
@@ -75,20 +89,6 @@ def track_visit(body: VisitTrack):
                 (body.topic, body.sector),
             )
     return {"tracked": True}
-
-
-@router.get("/articles/by-sector/{sector_slug}")
-def get_articles_by_sector(sector_slug: str, audience: str = "business"):
-    """Return a published article for a given sector and audience."""
-    with get_cursor(commit=False) as cur:
-        cur.execute(
-            "SELECT * FROM articles WHERE sector = %s AND audience = %s AND status IN ('published', 'update_pending') ORDER BY updated_at DESC LIMIT 1",
-            (sector_slug, audience),
-        )
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Article not found")
-        return dict(row)
 
 
 from api.modules.public.search import search_intent, get_embedding
