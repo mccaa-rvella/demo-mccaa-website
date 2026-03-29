@@ -39,20 +39,20 @@ export default function KBLayout() {
             }`}>
               Knowledge Base
             </Link>
-            <a href="/#about" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
+            <a href="/?page=about" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
               About
             </a>
-            <a href="/#news" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
+            <a href="/?page=news" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
               News
             </a>
-            <a href="/#calls" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
+            <a href="/?page=calls" className="text-sm font-semibold text-gray-700 hover:text-mccaa-teal transition-colors">
               Calls
             </a>
           </div>
 
           <div className="flex items-center gap-3">
             <a
-              href="/"
+              href="/?page=login"
               className="px-6 py-2 rounded-full text-sm font-bold transition-all shadow-md bg-gray-900 text-white hover:bg-mccaa-teal"
             >
               Login

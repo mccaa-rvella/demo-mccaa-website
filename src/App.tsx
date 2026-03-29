@@ -1468,7 +1468,14 @@ const CallsPage = () => {
 };
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    if (page && ['home', 'about', 'login', 'consumer-rights', 'calls', 'news', 'wizard'].includes(page)) {
+      return page as Page;
+    }
+    return 'home';
+  });
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [showStickyAI, setShowStickyAI] = useState(false);
