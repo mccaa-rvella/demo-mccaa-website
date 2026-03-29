@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from api.db import get_cursor
 
@@ -121,3 +122,57 @@ def test_delete_article():
     client = get_client()
     resp = client.delete(f"/admin/articles/{article['id']}", headers=ADMIN_HEADERS)
     assert resp.status_code == 204
+
+
+MOCK_GENERATION_RESPONSE = json.dumps({
+    "title": "Toy Safety Compliance in Malta",
+    "html_content": '<div id="sec-technical" data-topics="technical" data-actors="manufacturer,importer"><h2>Technical Regulations</h2><p>Content...</p></div>',
+    "tag_map": {
+        "sec-technical": {"topics": ["technical"], "actors": ["manufacturer", "importer"]},
+    },
+    "cross_cutting_summaries": [
+        {
+            "topic": "CE Marking",
+            "scope": "cross-cutting",
+            "summary": "CE marking is mandatory for toys placed on the EU market.",
+            "article_slug": "ce-marking",
+        }
+    ],
+})
+
+
+@patch("api.modules.articles.generator.select_skills_for_article")
+@patch("api.modules.articles.generator.anthropic")
+def test_generate_business_article(mock_anthropic, mock_skills):
+    mock_skills.return_value = []
+    mock_client = MagicMock()
+    mock_anthropic.Anthropic.return_value = mock_client
+    mock_client.messages.create.return_value = MagicMock(
+        content=[MagicMock(text=MOCK_GENERATION_RESPONSE)]
+    )
+
+    # Seed a knowledge unit
+    with get_cursor() as cur:
+        cur.execute(
+            """INSERT INTO knowledge_units (title, content, classification)
+               VALUES ('Toy Directive', 'Content...', %s) RETURNING id""",
+            (json.dumps({"types": ["technical"], "sectors": ["toys"], "actors": ["manufacturer"], "scope": "sector-specific"}),),
+        )
+        unit_id = cur.fetchone()["id"]
+
+    from api.modules.articles.generator import generate_article
+    result = generate_article(
+        sector="toys", scope="sector-specific", audience="business"
+    )
+
+    assert result["title"] == "Toy Safety Compliance in Malta"
+    assert "sec-technical" in result["tag_map"]
+    assert len(result["cross_cutting_summaries"]) == 1
+
+    # Verify article was saved as draft
+    with get_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM articles WHERE slug = %s", (result["slug"],))
+        article = cur.fetchone()
+        assert article is not None
+        assert article["status"] == "draft"
+        assert article["audience"] == "business"
