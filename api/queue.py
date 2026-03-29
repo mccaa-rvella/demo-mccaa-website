@@ -1,8 +1,13 @@
 # api/queue.py
 import json
+import logging
+import threading
+import time
 from datetime import datetime
 from typing import Optional
 from api.db import get_cursor
+
+logger = logging.getLogger(__name__)
 
 
 def enqueue_task(task_type: str, payload: dict) -> int:
@@ -53,3 +58,69 @@ def fail_task(task_id: int, error: str):
                WHERE id = %s""",
             (error, task_id),
         )
+
+
+# Task handler registry — populated at import time
+TASK_HANDLERS = {}
+
+
+def register_handlers():
+    """Register all task handlers. Called after all modules are imported."""
+    from api.modules.ingestion.crawl import run_crawl
+    from api.modules.ingestion.scrape import run_scrape
+    from api.modules.ingestion.consolidation import run_consolidation
+    from api.modules.classification.classifier import run_classification
+    from api.modules.articles.generator import generate_article
+    from api.modules.ingestion.json_schema import run_json_normalize
+
+    TASK_HANDLERS.update({
+        "crawl": lambda payload: run_crawl(payload["url"]),
+        "scrape": lambda payload: run_scrape(payload["url"]),
+        "consolidate": lambda payload: run_consolidation(payload["batch_id"]),
+        "classify": lambda payload: run_classification(payload["unit_id"]),
+        "json_normalize": lambda payload: run_json_normalize(payload["records"]),
+        "generate_article": lambda payload: generate_article(
+            sector=payload["sector"], scope=payload["scope"], audience=payload["audience"],
+        ),
+        "update_article": lambda payload: generate_article(
+            sector=payload["sector"], scope=payload["scope"], audience=payload["audience"],
+        ),
+    })
+
+
+def process_next_task() -> bool:
+    """Claim and process the next queued task. Returns True if a task was processed."""
+    task = claim_next_task()
+    if not task:
+        return False
+
+    handler = TASK_HANDLERS.get(task["task_type"])
+    if not handler:
+        fail_task(task["id"], f"Unknown task type: {task['task_type']}")
+        return True
+
+    try:
+        result = handler(task["payload"])
+        complete_task(task["id"], result or {})
+    except Exception as e:
+        logger.exception(f"Task {task['id']} ({task['task_type']}) failed")
+        fail_task(task["id"], str(e))
+
+    return True
+
+
+def start_worker(poll_interval: int = 2):
+    """Start the background worker thread."""
+    def _worker_loop():
+        register_handlers()
+        while True:
+            try:
+                if not process_next_task():
+                    time.sleep(poll_interval)
+            except Exception:
+                logger.exception("Worker loop error")
+                time.sleep(poll_interval)
+
+    thread = threading.Thread(target=_worker_loop, daemon=True)
+    thread.start()
+    return thread
