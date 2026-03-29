@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DB_PORT=5434 .venv/bin/python -m pytest api/tests/test_skills.py -v)",
+      "Bash(/Users/rudie/mccaa-website/demo-mccaa-website/.venv/bin/pip list:*)",
+      "Bash(python3 -c \"import fastapi; print\\(fastapi.__version__\\)\")",
+      "Bash(DB_PORT=5434 python -m pytest api/tests/test_ingestion.py -v)",
+      "Bash(DB_PORT=5434 python -m pytest api/tests/test_ingestion.py api/tests/test_consolidation.py -v)",
+      "Bash(python -m pytest tests/test_classification.py -v)",
+      "Read(//Users/rudie/mccaa-website/**)",
+      "Bash(python -m pytest api/tests/test_classification.py -v)",
+      "Bash(python -m pytest api/tests/ -v)",
+      "Bash(python -m pytest tests/test_articles.py -v)",
+      "Bash(python -m pytest api/tests/test_articles.py -v)"
+    ]
+  }
+}

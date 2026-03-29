@@ -1,0 +1,6 @@
+firecrawl-py
+PyMuPDF
+psycopg2-binary
+openai
+python-dotenv
+pydantic

@@ -148,6 +148,9 @@ app.include_router(ingestion_router)
 from api.modules.classification.router import router as classification_router
 app.include_router(classification_router)
 
+from api.modules.articles.router import router as articles_router
+app.include_router(articles_router)
+
 class ChatMessage(BaseModel):
     role: str
     text: str
