@@ -1,15 +1,15 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     image: ankane/pgvector:latest
     container_name: mccaa-website-db
+    ports:
+      - "5434:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: mccaa_website
-    ports:
-      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -19,16 +19,21 @@ services:
     container_name: mccaa-website-api
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASS=mysecretpassword
-      - DB_NAME=mccaa_website
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     depends_on:
       - db
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASS: mysecretpassword
+      DB_NAME: mccaa_website
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-mccaa-admin-2026}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY}
+    volumes:
+      - ./api:/app
 
 volumes:
   pgdata:
