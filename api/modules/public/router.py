@@ -77,6 +77,20 @@ def track_visit(body: VisitTrack):
     return {"tracked": True}
 
 
+@router.get("/articles/by-sector/{sector_slug}")
+def get_articles_by_sector(sector_slug: str, audience: str = "business"):
+    """Return a published article for a given sector and audience."""
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT * FROM articles WHERE sector = %s AND audience = %s AND status IN ('published', 'update_pending') ORDER BY updated_at DESC LIMIT 1",
+            (sector_slug, audience),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Article not found")
+        return dict(row)
+
+
 from api.modules.public.search import search_intent, get_embedding
 from api.modules.public.conversation import (
     get_conversation, add_message, conversation_length, MAX_FOLLOW_UPS
