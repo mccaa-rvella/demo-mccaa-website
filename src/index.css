@@ -330,3 +330,21 @@
   display: inline-block;
   margin: 0 0.4rem 0.4rem 0;
 }
+
+/* Source Viewer article sections */
+.article-content > div[data-topics] {
+  border-left: 3px solid #2da0a4;
+  padding-left: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.article-content > div[data-topics] h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.article-content > div[data-topics] p {
+  color: #374151;
+  line-height: 1.7;
+}
