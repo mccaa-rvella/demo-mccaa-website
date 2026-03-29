@@ -145,6 +145,9 @@ app.include_router(skills_router)
 from api.modules.ingestion.router import router as ingestion_router
 app.include_router(ingestion_router)
 
+from api.modules.classification.router import router as classification_router
+app.include_router(classification_router)
+
 class ChatMessage(BaseModel):
     role: str
     text: str
