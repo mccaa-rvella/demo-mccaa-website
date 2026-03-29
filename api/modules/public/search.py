@@ -112,7 +112,7 @@ def search_intent(query: str, conversation_history: list[dict] = None) -> dict:
 
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     response = client.messages.create(
-        model="claude-sonnet-4-5-20250514",
+        model="claude-sonnet-4-20250514",
         max_tokens=500,
         messages=[{"role": "user", "content": prompt}],
     )
